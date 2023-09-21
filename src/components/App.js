@@ -1,10 +1,10 @@
 import { Component } from 'react';
-import { fetchSearch } from 'api';
-import { ImageGallery } from './components/ImageGallery/ImageGallery';
-import { Searchbar } from './components/Searchbar/Searchbar';
-import { RootStyle } from './components/RootStyle/RootStyle.styled';
+import { fetchSearch } from './api';
+import { ImageGallery } from './ImageGallery/ImageGallery';
+import { Searchbar } from './Searchbar/Searchbar';
+import { RootStyle } from './RootStyle/RootStyle.styled';
 import { Bars } from 'react-loader-spinner';
-import { Button } from 'components/Button/Button';
+import { Button } from './Button/Button';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
