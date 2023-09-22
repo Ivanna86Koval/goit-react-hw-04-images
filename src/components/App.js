@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchSearch } from './api';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -8,102 +8,88 @@ import { Button } from './Button/Button';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends Component {
-  state = {
-    search: '',
-    images: [],
-    page: 1,
-    loadMoreVisibility: false,
-    spinner: false,
-    max_page: null,
-    per_page: 12,
-    error: false,
-  };
+export const App =() => {
+  const [search, setSearch] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [loadMoreVisibility, setLoadMoreVisibility] = useState(false);
+  const [spinner, setSpinner] = useState(false);
+  const [maxPage, setMaxPage] = useState(null);
+  const [perPage] = useState(12);
+  const [error, setError] = useState(false);
 
-  async componentDidUpdate(prevProps, prevState) {
-    if (prevState.search !== this.state.search || prevState.page !== this.state.page) {
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!search) return;
+
       try {
-        this.setState({
-          spinner: true,
-        });
-        const images = await fetchSearch(this.state.search, this.state.page, this.state.per_page)
-        const { hits, totalHits } = images;
+        setSpinner(true);
+        const result = await fetchSearch(search, page, perPage);
+        const { hits, totalHits } = result;
 
-        this.setState({
-          images: [...this.state.images, ...hits],
-          totalHits: totalHits,
-          max_page: Math.ceil(totalHits / this.state.per_page)
-        })
-      
-        if (this.state.page > 1) {
-          return
-        } else {
+        setImages((prevImages) => [...prevImages, ...hits]);
+        setMaxPage(Math.ceil(totalHits / perPage));
+
+        if (page === 1) {
           toast.success(`We found ${totalHits} photos.`, {
-            position: toast.POSITION.TOP_RIGHT
-          })
+            position: toast.POSITION.TOP_RIGHT,
+          });
         }
-        
-      } catch (error) {
-        this.setState({ error: true });
-        toast.error('Something wrong. Try again.', {
-          position: toast.POSITION.TOP_RIGHT
-        })
-      } finally {
-        this.setState({
-          spinner: false,
+      } catch (err) {
+        setError(true);
+        toast.error('Something went wrong. Please try again.', {
+          position: toast.POSITION.TOP_RIGHT,
         });
+      } finally {
+        setSpinner(false);
       }
-    }
-  }
+    };
 
-  loadMore = e => {
-    if (this.state.page >= this.state.max_page) {
+    fetchData();
+  }, [search, page, perPage]);
+
+  const loadMore = () => {
+    if (page >= maxPage) {
       toast.error('There are no more images for this request');
-      this.setState({
-        loadMoreVisibility: true,
-      });
-      return;
+      setLoadMoreVisibility(true);
+    } else {
+      setPage((prevPage) => prevPage + 1);
     }
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
   };
 
-  onGetSearch = (word) => {
-    if (this.state.search !== word && word) {
-      this.setState({
-        search: word,
-        images: [],
-        page: 1,
-        error: false,
-      });
+  const onGetSearch = (word) => {
+    if (search !== word && word) {
+      setSearch(word);
+      setImages([]);
+      setPage(1);
+      setError(false);
     } else if (!word) {
-      toast.info('Please fill in field', {
+      toast.info('Please fill in the search field', {
         position: toast.POSITION.TOP_RIGHT,
       });
     }
   };
 
-  render() {
     return (
       <div>
-        <Searchbar onSubmit={this.onGetSearch} />
-        {this.state.spinner && (
+        <Searchbar onSubmit={onGetSearch} />
+        {spinner && (
           <Bars
-            height="80"
-            width="80"
-            color="#4fa94d"
-            ariaLabel="bars-loading"
-            visible={true}
-          />
+  height={80}
+  width={80}
+  color="#4fa94d"
+  ariaLabel="bars-loading"
+  wrapperStyle={{}}
+  wrapperClass=""
+  visible={true}/>
         )}
-        <ImageGallery images={this.state.images} />
-        {this.state.images.length > 0 && !this.state.loadMoreVisibility && (
-          <Button loadMore={this.loadMore} />
+        <ImageGallery images={images} />
+        {images.length > 0 && !loadMoreVisibility && (
+          <Button loadMore={loadMore} />
         )}
         <ToastContainer />
         <RootStyle></RootStyle>
       </div>
     );
   }
-}
